@@ -1,35 +1,29 @@
 # Studyflow — Smart Study Planner
 
-A responsive, browser-based study planner. It has no package installation or build step.
+Studyflow is a personal study planner with separate username/password accounts. Subjects, study tasks, exams, and weekly goals are saved to PostgreSQL for the signed-in account. Study materials can be added, previewed, downloaded, and removed; file contents stay in that browser's local storage.
 
-## Run locally
+## Deploy from GitHub to Render
 
-Serve this folder from localhost so browser storage works consistently:
+This project is a Node web service, not a static site. The `render.yaml` Blueprint creates a new web service and a PostgreSQL database. Your existing static site can remain available while you try the new service; open the URL for `studyflow-account-app` after it deploys.
 
-```powershell
-python -m http.server 8000
-```
+1. Create a separate branch in GitHub (for example, `account-login`) so your current static site can stay on its existing branch. Open that branch in Codespaces.
+2. Replace `index.html`, `render.yaml`, and `README.md`, and add `app.js`, `server.js`, and `package.json` at the repository root. Save and commit these changes to the new branch.
+3. In Render, choose **New** → **Blueprint**, connect the repository, and select the `account-login` branch.
+4. Render reads `render.yaml`. Review the service and database, then apply the Blueprint.
+5. Wait for the web service to finish deploying. Open its `onrender.com` URL and create an account.
 
-Then visit <http://localhost:8000>.
+The new service is named `studyflow-account-app` so it does not attempt to turn the existing static service into a different runtime. Render does not allow static sites to change into Node web services. The new web service provides the server-side login and account-specific planner storage.
 
-## Deploy with Git and Render
+## Free database trial
 
-1. Create an empty repository on GitHub, then connect this folder to it. This workspace is already a Git repository on the `master` branch. Replace the sample remote with your GitHub repository URL:
+The included Blueprint selects Render's free PostgreSQL plan, as requested for a short trial. **Free Render PostgreSQL databases expire 30 days after creation.** After expiry, the database is inaccessible; Render gives 14 additional days to upgrade before deleting it and its data. Upgrade the database before its expiry date to keep user accounts and planner data. Free web services can also spin down while idle, so the first page load after inactivity may take a little longer.
 
-   ```powershell
-   git add index.html README.md render.yaml
-   git commit -m "Add Studyflow planner"
-   git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPOSITORY.git
-   git push -u origin master
-   ```
+## What is saved where
 
-2. In Render, choose **New → Blueprint**, connect that repository, and deploy the `render.yaml` Blueprint. It configures a static site that publishes the repository root; there is no build command.
-3. Render will provide the hosted site URL. Later pushes to the connected branch trigger a new deploy.
+- Accounts, password hashes, sessions, subjects, tasks, exams, and weekly goals are stored on the server in PostgreSQL. Passwords are salted and hashed; they are never stored as plain text.
+- Study material file contents stay in that browser's IndexedDB and are separated by account on that browser. They do not sync to other devices and are not stored in PostgreSQL.
+- No API keys or manually entered environment variables are needed for the Render Blueprint. It connects the web service to its database using `DATABASE_URL`.
 
-You can also create a **New → Static Site** in Render and set the publish directory to `.` with the build command left blank.
+## Local development
 
-## Uploaded study materials and saved data
-
-Tasks, subjects, exams, and goals are saved in the browser's local storage. Uploaded files are kept in that browser's IndexedDB and can be grouped by subject, opened (PDF and common image files), downloaded, or removed. Files are limited to 20 MB each.
-
-This is a static app: each browser/device has its own private copy of planner data and uploaded files. Publishing the site does not upload your study files to Render or sync data between devices. Shared accounts, cloud backups, and cross-device file access would require a backend and file storage service.
+Use Node.js 20 or newer and a PostgreSQL database. Set `DATABASE_URL` to the database connection string, install dependencies, and start the app with the `start` script in `package.json`. The server listens on the port supplied by the host (or port 10000 locally).
